@@ -25,8 +25,11 @@ class MainActivity : AppCompatActivity() {
         val dct = pixels.toDct()
         val fromDct = dct.fromDct()
         var diff = 0f
+        var maxDiff = 0f
         pixels.forEachIndexed { index1, arrayList ->
             arrayList.forEachIndexed { index2, pixel ->
+                val currDiff = pixel.maxDiff(fromDct[index1][index2])
+                if (currDiff > maxDiff) maxDiff = currDiff
                 diff += pixel.compare(fromDct[index1][index2])
             }
         }
