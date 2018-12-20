@@ -2,7 +2,6 @@ package com.example.matek3022.nirs
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 
@@ -14,7 +13,7 @@ class MainActivity : AppCompatActivity() {
         val options = BitmapFactory.Options()
         options.outConfig = Bitmap.Config.ARGB_8888
         options.inPreferredConfig = Bitmap.Config.ARGB_8888
-        var c = BitmapFactory.decodeResource(resources, R.drawable.test, options)
+        var c = BitmapFactory.decodeResource(resources, R.drawable.img, options)
 //        val os = ByteArrayOutputStream()
 //        c.compress(Bitmap.CompressFormat.JPEG, 100, os)
 //        val array = os.toByteArray()
@@ -25,7 +24,12 @@ class MainActivity : AppCompatActivity() {
 
         val dct = pixels.toDct()
         val fromDct = dct.fromDct()
-
+        var diff = 0f
+        pixels.forEachIndexed { index1, arrayList ->
+            arrayList.forEachIndexed { index2, pixel ->
+                diff += pixel.compare(fromDct[index1][index2])
+            }
+        }
         val fromDctPicture = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
         fromDctPicture.setPixels(fromDct)
