@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.widget.Toast
+import java.io.ByteArrayOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,12 +18,12 @@ class MainActivity : AppCompatActivity() {
         var c = BitmapFactory.decodeResource(resources, R.drawable.img, options)
         val text = "Testtext"
         c.codeText(text)
+
+        val os = ByteArrayOutputStream()
+        c.compress(Bitmap.CompressFormat.PNG, 50, os)
+        val array = os.toByteArray()
+        c = BitmapFactory.decodeByteArray(array, 0, array.size, options)
         val outText = c.getText()
-        Toast.makeText(this, outText, Toast.LENGTH_SHORT).show()
-//        val os = ByteArrayOutputStream()
-//        c.compress(Bitmap.CompressFormat.JPEG, 100, os)
-//        val array = os.toByteArray()
-//        c = BitmapFactory.decodeByteArray(array, 0, array.size)
 //        val height = c.height
 //        val width = c.width
 //        val pixels = c.getPixels()
