@@ -15,14 +15,21 @@ class MainActivity : AppCompatActivity() {
         options.outConfig = Bitmap.Config.ARGB_8888
         options.inPreferredConfig = Bitmap.Config.ARGB_8888
         options.inMutable = true
-        var c = BitmapFactory.decodeResource(resources, R.drawable.img, options)
-        val text = "Testtext"
+        var c = BitmapFactory.decodeResource(resources, R.drawable.test, options)
+
+
+        var os = ByteArrayOutputStream()
+        c.compress(Bitmap.CompressFormat.JPEG, 100, os)
+        var array = os.toByteArray()
+        c = BitmapFactory.decodeByteArray(array, 0, array.size, options)
+        val text = "Тестовое сообщение, довольно большое сообщение"
         c.codeText(text)
 
-        val os = ByteArrayOutputStream()
-        c.compress(Bitmap.CompressFormat.PNG, 50, os)
-        val array = os.toByteArray()
-        c = BitmapFactory.decodeByteArray(array, 0, array.size, options)
+//        os = ByteArrayOutputStream()
+//        c.compress(Bitmap.CompressFormat.JPEG, 100, os)
+//        array = os.toByteArray()
+//        c = BitmapFactory.decodeByteArray(array, 0, array.size, options)
+
         val outText = c.getText()
 //        val height = c.height
 //        val width = c.width

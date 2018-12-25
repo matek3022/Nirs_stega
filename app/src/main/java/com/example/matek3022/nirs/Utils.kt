@@ -1,5 +1,6 @@
 package com.example.matek3022.nirs
 
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Color
 import java.util.*
@@ -12,9 +13,19 @@ import kotlin.collections.ArrayList
 
 const val seed = 4L
 
+const val TEXT_ID = "text"
+
 fun Bitmap.codeText(text: String) {
     val bitArray = ArrayList<Boolean>()
-    text.toByteArray().forEach {
+    val byteArray = text.toByteArray()
+    val byteSizeArr = Utils.intToByteArray(byteArray.size)
+    TEXT_ID.toByteArray().forEach {
+        bitArray.addAll(getBits(it).toList())
+    }
+    byteSizeArr.forEach {
+        bitArray.addAll(getBits(it).toList())
+    }
+    byteArray.forEach {
         bitArray.addAll(getBits(it).toList())
     }
     val pixels = getPixels()
@@ -22,15 +33,11 @@ fun Bitmap.codeText(text: String) {
     setPixels(pixels, 1)
 }
 
+@Throws(Resources.NotFoundException::class)
 fun Bitmap.getText(): String {
     val pixels = getPixels()
-    val bits = pixels.fromPixels()
-    val byteArray = ByteArray(bits.size / 8)
-    for (i in 0 until bits.size / 8) {
-        byteArray[i] = getByte(BooleanArray(8) {
-            bits[i * 8 + it]
-        })
-    }
+    val bits = pixels.fromPixels(TEXT_ID)
+    val byteArray = booleanArrayToByteArray(bits)
     return String(byteArray)
 }
 
@@ -46,14 +53,8 @@ fun ArrayList<ArrayList<Pixel>>.inToPixels(bitsArray: ArrayList<Boolean>) {
     val blockNcount = n / 8
     val blockMcount = m / 8
     val maxBlocks = blockNcount * blockMcount
-    val randomIndexes = IntArray(bitsCount) { i -> -1 }
-    randomIndexes.forEachIndexed { index, i ->
-        var curr = -1
-        while (randomIndexes.contains(curr)) {
-            curr = random.nextInt(maxBlocks - 1)
-        }
-        randomIndexes[index] = curr
-    }
+    val randomIndexes = IntArray(maxBlocks) { i -> i }.toMutableList()
+    randomIndexes.shuffle(random)
 
     var bitsInput = 0
 
@@ -81,11 +82,11 @@ fun ArrayList<ArrayList<Pixel>>.inToPixels(bitsArray: ArrayList<Boolean>) {
                     Dct.forwardDCT8x8(matr8x8Red)
                     Dct.forwardDCT8x8(matr8x8Green)
                     Dct.forwardDCT8x8(matr8x8Blue)
-                    val bit = bitsArray[findingIndex]
+                    val bit = bitsArray[bitsInput]
                     matr8x8Red.devideArray(64)
                     matr8x8Green.devideArray(64)
                     matr8x8Blue.devideArray(64)
-//                    toQuantiz(matr8x8Blue)
+                    toQuantiz(matr8x8Blue)
                     val lastBit = Math.abs(Math.round(matr8x8Blue[0] % 2))
                     if (lastBit == 1) {
                         if (!bit) matr8x8Blue[0] = matr8x8Blue[0] + 1f
@@ -94,7 +95,7 @@ fun ArrayList<ArrayList<Pixel>>.inToPixels(bitsArray: ArrayList<Boolean>) {
                         if (bit) matr8x8Blue[0] = matr8x8Blue[0] + 1f
 //                        else matr8x8Blue[0] = Math.round(matr8x8Blue[0]).toFloat()
                     }
-//                    fromQuantiz(matr8x8Blue)
+                    fromQuantiz(matr8x8Blue)
                     bitsInput++
                     Dct.inverseDCT8x8(matr8x8Red)
                     Dct.inverseDCT8x8(matr8x8Green)
@@ -115,7 +116,8 @@ fun ArrayList<ArrayList<Pixel>>.inToPixels(bitsArray: ArrayList<Boolean>) {
     }
 }
 
-fun ArrayList<ArrayList<Pixel>>.fromPixels(): List<Boolean> {
+@Throws(Resources.NotFoundException::class)
+fun ArrayList<ArrayList<Pixel>>.fromPixels(id: String): List<Boolean> {
     val n = this.size
     val m = this[0].size
     val matr8x8Red = FloatArray(8 * 8)
@@ -124,24 +126,20 @@ fun ArrayList<ArrayList<Pixel>>.fromPixels(): List<Boolean> {
     val random = Random(seed)
     val blockNcount = n / 8
     val blockMcount = m / 8
-    val bitsCount = blockMcount * blockNcount / 4
+    var bitsCount = blockMcount * blockNcount / 4
     val maxBlocks = blockNcount * blockMcount
-    val randomIndexes = IntArray(bitsCount) { i -> -1 }
-    val res = BooleanArray(bitsCount) { i -> false }.toMutableList()
-    randomIndexes.forEachIndexed { index, i ->
-        var curr = -1
-        while (randomIndexes.contains(curr)) {
-            curr = random.nextInt(maxBlocks - 1)
-        }
-        randomIndexes[index] = curr
-    }
+    val randomIndexes = IntArray(maxBlocks) { i -> i }.toMutableList()
+    randomIndexes.shuffle(random)
+    val res = ArrayList<Boolean>()
 
-    var bitsInput = 0
+    var bitsRead = 0
+
+    val idBytes = id.toByteArray()
 
     for (i in 0 until blockNcount) {
         for (j in 0 until blockMcount) {
-            if (bitsInput < bitsCount) {
-                if (bitsInput < bitsCount) {
+            if (bitsRead < bitsCount) {
+                if (bitsRead < bitsCount) {
                     val currIndex = i * blockMcount + j
                     val findingIndex = randomIndexes.indexOf(currIndex)
                     if (findingIndex != -1) {
@@ -158,10 +156,28 @@ fun ArrayList<ArrayList<Pixel>>.fromPixels(): List<Boolean> {
                         matr8x8Red.devideArray(64)
                         matr8x8Green.devideArray(64)
                         matr8x8Blue.devideArray(64)
-//                        toQuantiz(matr8x8Blue)
+                        toQuantiz(matr8x8Blue)
                         val lastBit = Math.abs(Math.round(matr8x8Blue[0] % 2))
-                        res[findingIndex] = lastBit == 1
-                        bitsInput++
+                        res.add(lastBit == 1)
+                        bitsRead++
+
+                        if (bitsRead == idBytes.size * 8) {
+                            val outId = String(booleanArrayToByteArray(res.toMutableList()))
+                            if (!outId.contains(id)) {
+                                throw Resources.NotFoundException()
+                            }
+                        } else if(bitsRead == idBytes.size * 8 + 4 * 8) {
+                            val countBoolean = ArrayList<Boolean>()
+                            res.forEachIndexed { index, b ->
+                                if (index >= idBytes.size * 8 && index < idBytes.size * 8 + 4 * 8) {
+                                    countBoolean.add(b)
+                                }
+                            }
+                            val countByte = countBoolean.toByteArray()
+                            val count = Utils.byteArrayToInt(countByte)
+                            bitsCount = idBytes.size * 8 + 4 * 8 + count * 8
+                            res.clear()
+                        }
                     }
                 }
             }
@@ -259,4 +275,24 @@ fun getByte(arr: BooleanArray): Byte {
     currInt += 1 * if (arr[7]) 1 else 0
     val byte = currInt - 128
     return byte.toByte()
+}
+
+fun ArrayList<Boolean>.toByteArray(): ByteArray {
+    val byteArray = ByteArray(this.size / 8)
+    for (i in 0 until this.size / 8) {
+        byteArray[i] = getByte(BooleanArray(8) {
+            this[i * 8 + it]
+        })
+    }
+    return byteArray
+}
+
+fun booleanArrayToByteArray(booll: List<Boolean>): ByteArray {
+    val byteArray = ByteArray(booll.size / 8)
+    for (i in 0 until booll.size / 8) {
+        byteArray[i] = getByte(BooleanArray(8) {
+            booll[i * 8 + it]
+        })
+    }
+    return byteArray
 }
