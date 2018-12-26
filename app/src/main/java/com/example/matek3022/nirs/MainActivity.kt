@@ -4,50 +4,52 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import java.io.ByteArrayOutputStream
+import android.util.Log
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val options = BitmapFactory.Options()
-        options.outConfig = Bitmap.Config.ARGB_8888
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888
-        options.inMutable = true
-        var c = BitmapFactory.decodeResource(resources, R.drawable.test, options)
+//        val options = BitmapFactory.Options()
+//        options.outConfig = Bitmap.Config.ARGB_8888
+//        options.inPreferredConfig = Bitmap.Config.ARGB_8888
+//        options.inMutable = true
+//        var c = BitmapFactory.decodeResource(resources, R.drawable.test, options)
+//        var c1 = BitmapFactory.decodeResource(resources, R.drawable.test, options)
 
-
-        var os = ByteArrayOutputStream()
-        c.compress(Bitmap.CompressFormat.JPEG, 100, os)
-        var array = os.toByteArray()
-        c = BitmapFactory.decodeByteArray(array, 0, array.size, options)
-        val text = "Тестовое сообщение, довольно большое сообщение"
-        c.codeText(text)
+//        var os = ByteArrayOutputStream()
+//        c.compress(Bitmap.CompressFormat.JPEG, 100, os)
+//        var array = os.toByteArray()
+//        c = BitmapFactory.decodeByteArray(array, 0, array.size, options)
+//        val text = generateTextToPercentage(c, 100)
+//        c.codeText(text)
 
 //        os = ByteArrayOutputStream()
 //        c.compress(Bitmap.CompressFormat.JPEG, 100, os)
 //        array = os.toByteArray()
 //        c = BitmapFactory.decodeByteArray(array, 0, array.size, options)
 
-        val outText = c.getText()
-//        val height = c.height
-//        val width = c.width
-//        val pixels = c.getPixels()
-//
-//        val dct = pixels.toDct()
-//        val fromDct = dct.fromDct()
-//        var diff = 0f
-//        var maxDiff = 0
-//        pixels.forEachIndexed { index1, arrayList ->
-//            arrayList.forEachIndexed { index2, pixel ->
-//                val currDiff = pixel.maxDiff(fromDct[index1][index2])
-//                if (currDiff > maxDiff) maxDiff = currDiff
-//                diff += pixel.compare(fromDct[index1][index2])
-//            }
-//        }
-//        val fromDctPicture = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-//
-//        fromDctPicture.setPixels(fromDct)
+//        val outText = c.getText()
+
+//        val psnr = computePsnr(c, c1)
+        val resList = ArrayList<Pair<Int, Double>>()
+        for (i in 1..100) {
+            resList.add(i to getPsnrFromPercentage(i))
+        }
+//        getPsnrFromPercentage(23)
+    }
+
+    fun getPsnrFromPercentage(percentage: Int): Double{
+        val options = BitmapFactory.Options()
+        options.outConfig = Bitmap.Config.ARGB_8888
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888
+        options.inMutable = true
+        var c = BitmapFactory.decodeResource(resources, R.drawable.test, options)
+        var c1 = BitmapFactory.decodeResource(resources, R.drawable.test, options)
+        val text = generateTextToPercentage(c, percentage)
+        c.codeText(text)
+        Log.wtf("tag_percentage", percentage.toString())
+        return computePsnr(c, c1)
     }
 }

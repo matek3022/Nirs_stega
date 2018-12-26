@@ -296,3 +296,27 @@ fun booleanArrayToByteArray(booll: List<Boolean>): ByteArray {
     }
     return byteArray
 }
+
+fun computePsnr(bitmap1: Bitmap, bitmap2: Bitmap): Double {
+    var mse = 0L
+    val pixels1 = bitmap1.getPixels()
+    val pixels2 = bitmap2.getPixels()
+    pixels1.forEachIndexed { index1, arrayList ->
+        arrayList.forEachIndexed { index2, pixel ->
+            mse += Math.abs((pixel.blue - pixels2[index1][index2].blue) * (pixel.blue - pixels2[index1][index2].blue))
+        }
+    }
+    mse /= pixels1.size * pixels1[0].size
+    return 10 * Math.log10(255.0 * 255 / mse)
+}
+
+fun generateTextToPercentage(bitmap: Bitmap, percentage: Int): String {
+    val blockNcount = bitmap.height / 8
+    val blockMcount = bitmap.width / 8
+    val maxTextSize = blockMcount * blockNcount - (TEXT_ID.toByteArray().size * 8 + 4 * 8)
+    val p = percentage / 100.0
+    val byteArray = ByteArray((p * maxTextSize / 8).toInt())
+    val random = Random()
+    random.nextBytes(byteArray)
+    return String(byteArray)
+}
